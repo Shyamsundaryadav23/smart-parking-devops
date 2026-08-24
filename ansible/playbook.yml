@@ -48,7 +48,6 @@
         project_src: "{{ app_dir }}"
         state: present
         build: always
-        wait: true
       register: compose_result
 
     - name: Display Compose result
