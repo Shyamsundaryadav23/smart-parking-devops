@@ -31,14 +31,9 @@ pipeline {
 
                     Write-Host "Windows Workspace: $workspace"
 
-                    # Convert Jenkins Windows workspace to WSL path
-                    $workspaceWsl = wsl.exe -d Ubuntu -- wslpath -u "$workspace"
-
-                    if (-not $workspaceWsl) {
-                        throw "Failed to convert Jenkins workspace to WSL path."
-                    }
-
-                    $workspaceWsl = $workspaceWsl.Trim()
+                    # Convert Windows path to WSL path
+                    $workspaceWsl = $workspace -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\', '/'
 
                     Write-Host "WSL Workspace: $workspaceWsl"
 
@@ -60,10 +55,16 @@ pipeline {
             steps {
                 powershell '''
                     $workspace = $env:WORKSPACE
-                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$workspace").Trim()
+
+                    # Convert Windows path to WSL path
+                    $workspaceWsl = $workspace -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\', '/'
+
                     $ansibleDir = "$workspaceWsl/ansible"
 
-                    Write-Host "Testing EC2 connectivity..."
+                    Write-Host "============================================"
+                    Write-Host "Testing EC2 Connection"
+                    Write-Host "============================================"
                     Write-Host "Ansible directory: $ansibleDir"
 
                     wsl.exe -d Ubuntu -- bash -lc "
@@ -78,12 +79,17 @@ pipeline {
             steps {
                 powershell '''
                     $workspace = $env:WORKSPACE
-                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$workspace").Trim()
+
+                    # Convert Windows path to WSL path
+                    $workspaceWsl = $workspace -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\', '/'
+
                     $ansibleDir = "$workspaceWsl/ansible"
 
                     Write-Host "============================================"
                     Write-Host "Deploying Smart Parking to EC2"
                     Write-Host "============================================"
+                    Write-Host "Ansible directory: $ansibleDir"
 
                     wsl.exe -d Ubuntu -- bash -lc "
                         cd '$ansibleDir' &&
