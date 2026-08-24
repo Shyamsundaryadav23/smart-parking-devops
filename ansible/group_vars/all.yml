@@ -1,0 +1,6 @@
+---
+# Copy this file to all.yml and replace the repository URL.
+# Do not store private keys or application secrets in this file.
+app_dir: /opt/smart-parking
+repository_url: https://github.com/Shyamsundaryadav23/smart-parking-devops.git
+repository_version: main
