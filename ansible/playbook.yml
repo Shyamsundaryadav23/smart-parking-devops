@@ -11,6 +11,7 @@
         name:
           - docker.io
           - docker-compose-v2
+          - docker-buildx
           - git
           - psmisc
         state: present
@@ -27,6 +28,17 @@
         name: "{{ ansible_user }}"
         groups: docker
         append: true
+
+    - name: Verify Docker Buildx
+      become: false
+      ansible.builtin.command:
+        cmd: docker buildx version
+      register: buildx_version
+      changed_when: false
+
+    - name: Display Docker Buildx version
+      ansible.builtin.debug:
+        var: buildx_version.stdout
 
     - name: Ensure application directory exists
       ansible.builtin.file:
