@@ -20,11 +20,42 @@ pipeline {
             }
         }
 
+        stage('Verify Ansible Inventory') {
+            steps {
+                powershell '''
+                    $workspace = $env:WORKSPACE
+
+                    wsl.exe -d Ubuntu -- bash -lc "
+                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
+                        cd `$WSL_WORKSPACE/ansible &&
+                        ansible-inventory -i inventory.ini --list
+                    "
+                '''
+            }
+        }
+
+        stage('Test EC2 Connection') {
+            steps {
+                powershell '''
+                    $workspace = $env:WORKSPACE
+
+                    wsl.exe -d Ubuntu -- bash -lc "
+                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
+                        cd `$WSL_WORKSPACE/ansible &&
+                        ansible -i inventory.ini smart_parking -m ping
+                    "
+                '''
+            }
+        }
+
         stage('Deploy to EC2') {
             steps {
                 powershell '''
+                    $workspace = $env:WORKSPACE
+
                     wsl.exe -d Ubuntu -- bash -lc "
-                        cd '/mnt/c/Users/yshya/OneDrive/Desktop/Smart Parking/ansible' &&
+                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
+                        cd `$WSL_WORKSPACE/ansible &&
                         ansible-playbook -i inventory.ini playbook.yml
                     "
                 '''
@@ -34,11 +65,15 @@ pipeline {
 
     post {
         success {
+            echo '=============================================='
             echo 'Smart Parking deployment completed successfully!'
+            echo '=============================================='
         }
 
         failure {
+            echo '=============================================='
             echo 'Smart Parking deployment failed!'
+            echo '=============================================='
         }
     }
 }
