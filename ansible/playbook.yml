@@ -1,0 +1,67 @@
+---
+- name: Provision and deploy Smart Parking
+  hosts: smart_parking
+  become: true
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+    - name: Install deployment packages
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - git
+        state: present
+        update_cache: true
+
+    - name: Enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add deployment user to Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: true
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Checkout application repository
+      become: false
+      ansible.builtin.git:
+        repo: "{{ repository_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repository_version }}"
+        update: true
+
+    - name: Build and start application stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+        build: always
+        wait: true
+      register: compose_result
+
+    - name: Display Compose result
+      ansible.builtin.debug:
+        var: compose_result
+
+    - name: Verify backend health endpoint
+      ansible.builtin.uri:
+        url: http://localhost:5000/api/health
+        status_code: 200
+        return_content: true
+      register: backend_health
+
+    - name: Display backend health response
+      ansible.builtin.debug:
+        var: backend_health.json
