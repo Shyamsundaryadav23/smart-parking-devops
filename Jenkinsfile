@@ -3,12 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Test WSL + Ansible') {
             steps {
                 powershell '''
@@ -23,7 +17,8 @@ pipeline {
         stage('Verify Ansible Inventory') {
             steps {
                 powershell '''
-                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
+                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
 
                     Write-Host "Windows Workspace: $env:WORKSPACE"
                     Write-Host "WSL Workspace: $workspaceWsl"
@@ -36,9 +31,10 @@ pipeline {
         stage('Test EC2 Connection') {
             steps {
                 powershell '''
-                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
+                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
 
-                    Write-Host "Using Ansible directory: $workspaceWsl/ansible"
+                    Write-Host "Ansible directory: $workspaceWsl/ansible"
 
                     wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible -i inventory.ini smart_parking -m ping"
                 '''
@@ -48,7 +44,8 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 powershell '''
-                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
+                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
+                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
 
                     Write-Host "Deploying from: $workspaceWsl/ansible"
 
