@@ -24,8 +24,8 @@ pipeline {
             steps {
                 powershell '''
                     wsl.exe -d Ubuntu -- bash -lc "
-                        cd /home/shyam/smart-parking-ansible &&
-                        ansible-playbook -i inventory.ini deploy.yml
+                        cd '/mnt/c/Users/yshya/OneDrive/Desktop/Smart Parking/ansible' &&
+                        ansible-playbook -i inventory.ini playbook.yml
                     "
                 '''
             }
