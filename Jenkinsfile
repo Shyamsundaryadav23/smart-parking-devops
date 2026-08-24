@@ -23,13 +23,12 @@ pipeline {
         stage('Verify Ansible Inventory') {
             steps {
                 powershell '''
-                    $workspace = $env:WORKSPACE
+                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
 
-                    wsl.exe -d Ubuntu -- bash -lc "
-                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
-                        cd `$WSL_WORKSPACE/ansible &&
-                        ansible-inventory -i inventory.ini --list
-                    "
+                    Write-Host "Windows Workspace: $env:WORKSPACE"
+                    Write-Host "WSL Workspace: $workspaceWsl"
+
+                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && pwd && ls -la && ansible-inventory -i inventory.ini --list"
                 '''
             }
         }
@@ -37,13 +36,11 @@ pipeline {
         stage('Test EC2 Connection') {
             steps {
                 powershell '''
-                    $workspace = $env:WORKSPACE
+                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
 
-                    wsl.exe -d Ubuntu -- bash -lc "
-                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
-                        cd `$WSL_WORKSPACE/ansible &&
-                        ansible -i inventory.ini smart_parking -m ping
-                    "
+                    Write-Host "Using Ansible directory: $workspaceWsl/ansible"
+
+                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible -i inventory.ini smart_parking -m ping"
                 '''
             }
         }
@@ -51,13 +48,11 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 powershell '''
-                    $workspace = $env:WORKSPACE
+                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$env:WORKSPACE").Trim()
 
-                    wsl.exe -d Ubuntu -- bash -lc "
-                        WSL_WORKSPACE=`$(wslpath -u '$workspace') &&
-                        cd `$WSL_WORKSPACE/ansible &&
-                        ansible-playbook -i inventory.ini playbook.yml
-                    "
+                    Write-Host "Deploying from: $workspaceWsl/ansible"
+
+                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible-playbook -i inventory.ini playbook.yml"
                 '''
             }
         }
