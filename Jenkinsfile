@@ -3,9 +3,19 @@ pipeline {
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Test WSL + Ansible') {
             steps {
                 powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Testing WSL and Ansible"
+                    Write-Host "============================================"
+
                     wsl.exe -d Ubuntu -- bash -lc "
                         whoami &&
                         ansible-playbook --version
@@ -17,13 +27,31 @@ pipeline {
         stage('Verify Ansible Inventory') {
             steps {
                 powershell '''
-                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
-                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
+                    $workspace = $env:WORKSPACE
 
-                    Write-Host "Windows Workspace: $env:WORKSPACE"
+                    Write-Host "Windows Workspace: $workspace"
+
+                    # Convert Jenkins Windows workspace to WSL path
+                    $workspaceWsl = wsl.exe -d Ubuntu -- wslpath -u "$workspace"
+
+                    if (-not $workspaceWsl) {
+                        throw "Failed to convert Jenkins workspace to WSL path."
+                    }
+
+                    $workspaceWsl = $workspaceWsl.Trim()
+
                     Write-Host "WSL Workspace: $workspaceWsl"
 
-                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && pwd && ls -la && ansible-inventory -i inventory.ini --list"
+                    $ansibleDir = "$workspaceWsl/ansible"
+
+                    Write-Host "Ansible directory: $ansibleDir"
+
+                    wsl.exe -d Ubuntu -- bash -lc "
+                        cd '$ansibleDir' &&
+                        pwd &&
+                        ls -la &&
+                        ansible-inventory -i inventory.ini --list
+                    "
                 '''
             }
         }
@@ -31,44 +59,17 @@ pipeline {
         stage('Test EC2 Connection') {
             steps {
                 powershell '''
-                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
-                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
+                    $workspace = $env:WORKSPACE
+                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$workspace").Trim()
+                    $ansibleDir = "$workspaceWsl/ansible"
 
-                    Write-Host "============================================"
-                    Write-Host "JENKINS USER"
-                    Write-Host "============================================"
+                    Write-Host "Testing EC2 connectivity..."
+                    Write-Host "Ansible directory: $ansibleDir"
 
-                    whoami
-
-                    Write-Host "============================================"
-                    Write-Host "WINDOWS NETWORK TEST"
-                    Write-Host "============================================"
-
-                    Test-NetConnection 44.202.192.243 -Port 22
-
-                    Write-Host "============================================"
-                    Write-Host "WSL USER"
-                    Write-Host "============================================"
-
-                    wsl.exe -d Ubuntu -- bash -lc "whoami"
-
-                    Write-Host "============================================"
-                    Write-Host "WSL NETWORK TEST"
-                    Write-Host "============================================"
-
-                    wsl.exe -d Ubuntu -- bash -lc "timeout 10 bash -c '</dev/tcp/44.202.192.243/22' && echo 'PORT 22 OPEN' || echo 'PORT 22 CLOSED/TIMEOUT'"
-
-                    Write-Host "============================================"
-                    Write-Host "SSH KEY"
-                    Write-Host "============================================"
-
-                    wsl.exe -d Ubuntu -- bash -lc "ls -l ~/.ssh/smart-parking-key.pem"
-
-                    Write-Host "============================================"
-                    Write-Host "ANSIBLE PING"
-                    Write-Host "============================================"
-
-                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible -i inventory.ini smart_parking -m ping"
+                    wsl.exe -d Ubuntu -- bash -lc "
+                        cd '$ansibleDir' &&
+                        ansible -i inventory.ini smart_parking -m ping
+                    "
                 '''
             }
         }
@@ -76,12 +77,18 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 powershell '''
-                    $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
-                    $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
+                    $workspace = $env:WORKSPACE
+                    $workspaceWsl = (wsl.exe -d Ubuntu -- wslpath -u "$workspace").Trim()
+                    $ansibleDir = "$workspaceWsl/ansible"
 
-                    Write-Host "Deploying from: $workspaceWsl/ansible"
+                    Write-Host "============================================"
+                    Write-Host "Deploying Smart Parking to EC2"
+                    Write-Host "============================================"
 
-                    wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible-playbook -i inventory.ini playbook.yml"
+                    wsl.exe -d Ubuntu -- bash -lc "
+                        cd '$ansibleDir' &&
+                        ansible-playbook -i inventory.ini playbook.yml
+                    "
                 '''
             }
         }
