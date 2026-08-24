@@ -34,7 +34,39 @@ pipeline {
                     $workspaceWsl = $env:WORKSPACE -replace '^C:', '/mnt/c'
                     $workspaceWsl = $workspaceWsl -replace '\\\\', '/'
 
-                    Write-Host "Ansible directory: $workspaceWsl/ansible"
+                    Write-Host "============================================"
+                    Write-Host "JENKINS USER"
+                    Write-Host "============================================"
+
+                    whoami
+
+                    Write-Host "============================================"
+                    Write-Host "WINDOWS NETWORK TEST"
+                    Write-Host "============================================"
+
+                    Test-NetConnection 44.202.192.243 -Port 22
+
+                    Write-Host "============================================"
+                    Write-Host "WSL USER"
+                    Write-Host "============================================"
+
+                    wsl.exe -d Ubuntu -- bash -lc "whoami"
+
+                    Write-Host "============================================"
+                    Write-Host "WSL NETWORK TEST"
+                    Write-Host "============================================"
+
+                    wsl.exe -d Ubuntu -- bash -lc "timeout 10 bash -c '</dev/tcp/44.202.192.243/22' && echo 'PORT 22 OPEN' || echo 'PORT 22 CLOSED/TIMEOUT'"
+
+                    Write-Host "============================================"
+                    Write-Host "SSH KEY"
+                    Write-Host "============================================"
+
+                    wsl.exe -d Ubuntu -- bash -lc "ls -l ~/.ssh/smart-parking-key.pem"
+
+                    Write-Host "============================================"
+                    Write-Host "ANSIBLE PING"
+                    Write-Host "============================================"
 
                     wsl.exe -d Ubuntu -- bash -lc "cd '$workspaceWsl/ansible' && ansible -i inventory.ini smart_parking -m ping"
                 '''
