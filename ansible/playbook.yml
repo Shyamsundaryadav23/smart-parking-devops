@@ -12,6 +12,7 @@
           - docker.io
           - docker-compose-v2
           - git
+          - psmisc
         state: present
         update_cache: true
 
@@ -42,6 +43,12 @@
         dest: "{{ app_dir }}"
         version: "{{ repository_version }}"
         update: true
+
+    - name: Stop previous application processes using Compose ports
+      ansible.builtin.shell: fuser -k 5000/tcp 8080/tcp
+      register: stopped_application_processes
+      changed_when: stopped_application_processes.rc == 0
+      failed_when: false
 
     - name: Build and start application stack
       community.docker.docker_compose_v2:
