@@ -13,18 +13,21 @@
 // const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 // module.exports = dynamoDb;
-const AWS = require("aws-sdk");
-require("dotenv").config();
+const AWS = require('aws-sdk');
+require('dotenv').config();
 
-console.log("AWS REGION:", process.env.AWS_REGION);
-console.log("Users Table:", process.env.USERS_TABLE);
+const isLocal = Boolean(process.env.DYNAMODB_ENDPOINT);
 
 AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION || 'local',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID || (isLocal ? 'local' : undefined),
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || (isLocal ? 'local' : undefined),
 });
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const clientOptions = isLocal
+  ? { endpoint: new AWS.Endpoint(process.env.DYNAMODB_ENDPOINT) }
+  : {};
+
+const dynamoDb = new AWS.DynamoDB.DocumentClient(clientOptions);
 
 module.exports = dynamoDb;

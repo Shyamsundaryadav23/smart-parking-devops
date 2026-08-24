@@ -24,6 +24,7 @@ app.use('/api/users', userRoutes);
 
 // health check
 app.get('/health', (req, res) => res.send('OK'));
+app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 
 const http = require('http');
 const { startWatcher } = require('./services/expiryService');
@@ -35,7 +36,16 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 const io = init(server);
 
-server.listen(PORT, () => {
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. The backend may already be running.`);
+    process.exit(1);
+  }
+
+  throw error;
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   // start periodic expiration checks once server is running
   startWatcher();
