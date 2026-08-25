@@ -49,7 +49,7 @@ const Index = () => {
             </h2>
 
             <p className="fade-up mt-3 max-w-[92%] text-[clamp(.95rem,1.35vw,1.55rem)] leading-[1.5] tracking-[0.01em] text-slate-600">
-              Find nearby parking, check availability, and book in minutes.
+              Find nearby parking, check availability, and book in minute.
             </p>
 
             <div className="fade-up mt-4 flex flex-wrap items-center gap-3">
