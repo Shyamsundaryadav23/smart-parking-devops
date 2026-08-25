@@ -316,7 +316,7 @@ const AdminDashboard = () => {
       {/* Parking Lots */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Parking Locations</h2>
-        <p className="text-muted-foreground mt-1">Manage parking lots and monitor slot details</p>
+        <p className="text-muted-foreground mt-1">Manage parking lot and monitor slot details</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
