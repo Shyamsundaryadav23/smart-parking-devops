@@ -52,9 +52,6 @@ const AdminLogin = () => {
           </div>
 
           <h1 className="text-3xl font-bold gradient-text">Admin Login</h1>
-          <p className="text-muted-foreground mt-2">
-            Access the admin control panel
-          </p>
         </div>
 
         <div className="parking-card p-8">
@@ -85,7 +82,7 @@ const AdminLogin = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="********"
                   className="pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
