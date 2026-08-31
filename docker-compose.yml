@@ -42,21 +42,21 @@ services:
       db-init:
         condition: service_completed_successfully
 
-  frontend:
-    build:
-      context: ./Frontend
-      args:
-        VITE_API_URL: http://localhost:5000/api
-    ports:
-      - "8080:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+frontend:
+  build:
+    context: ./Frontend
+    args:
+      VITE_API_URL: http://34.203.73.136:5000/api
+  ports:
+    - "8080:80"
+  depends_on:
+    backend:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
 
 volumes:
   dynamodb-data:

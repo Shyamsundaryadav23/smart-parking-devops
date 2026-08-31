@@ -1,16 +1,16 @@
-import axios from 'axios';
+import axios from "axios";
 
-// baseURL points to the Node/Express server; adjust if running on a different port or using a proxy
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
-// attach token if available
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
