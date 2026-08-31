@@ -50,9 +50,6 @@ const Login = () => {
           </div>
 
           <h1 className="text-3xl font-bold gradient-text">Smart Parking</h1>
-          <p className="text-muted-foreground mt-2">
-            Sign in to manage your parking
-          </p>
         </div>
 
         <div className="parking-card p-8">
