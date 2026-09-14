@@ -46,7 +46,7 @@ services:
     build:
       context: ./Frontend
       args:
-        VITE_API_URL: http://34.203.73.136:5000/api
+        VITE_API_URL: http://44.193.203.75:5000/api
     ports:
       - "8080:80"
     #   args:
