@@ -3,6 +3,151 @@ pipeline {
 
     stages {
 
+        // ============================================================
+        // FRONTEND CI
+        // ============================================================
+
+        stage('Frontend Install') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Installing Frontend Dependencies"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\Frontend"
+
+                    npm ci
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Frontend npm ci failed."
+                    }
+                '''
+            }
+        }
+
+        stage('Frontend Unit Test') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Running Frontend Unit Tests"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\Frontend"
+
+                    npm run test
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Frontend unit tests failed."
+                    }
+                '''
+            }
+        }
+
+        stage('Frontend Lint') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Running Frontend ESLint"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\Frontend"
+
+                    npm run lint
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Frontend lint failed."
+                    }
+                '''
+            }
+        }
+
+        stage('Frontend Build') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Building Frontend"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\Frontend"
+
+                    npm run build
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Frontend build failed."
+                    }
+                '''
+            }
+        }
+
+
+        // ============================================================
+        // BACKEND CI
+        // ============================================================
+
+        stage('Backend Install') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Installing Backend Dependencies"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\backend"
+
+                    npm ci
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Backend npm ci failed."
+                    }
+                '''
+            }
+        }
+
+        stage('Backend Unit Test') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Running Backend Unit Tests"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE\\backend"
+
+                    npm test
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Backend unit tests failed."
+                    }
+                '''
+            }
+        }
+
+
+        // ============================================================
+        // DOCKER CI
+        // ============================================================
+
+        stage('Docker Build') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Building Docker Images"
+                    Write-Host "============================================"
+
+                    Set-Location "$env:WORKSPACE"
+
+                    docker compose build
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Docker Compose build failed."
+                    }
+                '''
+            }
+        }
+
+
+        // ============================================================
+        // WSL + ANSIBLE
+        // ============================================================
+
         stage('Test WSL + Ansible') {
             steps {
                 powershell '''
@@ -22,6 +167,11 @@ pipeline {
             }
         }
 
+
+        // ============================================================
+        // ANSIBLE INVENTORY
+        // ============================================================
+
         stage('Verify Ansible Inventory') {
             steps {
                 powershell '''
@@ -34,8 +184,6 @@ pipeline {
                     Write-Host "Windows Workspace: $workspace"
 
                     # Convert Windows path to WSL path.
-                    # Use .Replace() instead of PowerShell -replace
-                    # because backslash is a regex character.
                     if ($workspace -match '^([A-Za-z]):(.*)$') {
                         $drive = $matches[1].ToLower()
                         $path = $matches[2].Replace('\\', '/')
@@ -69,6 +217,11 @@ pipeline {
                 '''
             }
         }
+
+
+        // ============================================================
+        // EC2 CONNECTION
+        // ============================================================
 
         stage('Test EC2 Connection') {
             steps {
@@ -104,6 +257,11 @@ pipeline {
             }
         }
 
+
+        // ============================================================
+        // DEPLOYMENT
+        // ============================================================
+
         stage('Deploy to EC2') {
             steps {
                 powershell '''
@@ -137,7 +295,49 @@ pipeline {
                 '''
             }
         }
+
+
+        // ============================================================
+        // HEALTH CHECK
+        // ============================================================
+
+        stage('Health Check') {
+            steps {
+                powershell '''
+                    Write-Host "============================================"
+                    Write-Host "Checking Smart Parking Backend Health"
+                    Write-Host "============================================"
+
+                    $healthUrl = "http://44.193.203.75:5000/api/health"
+
+                    Write-Host "Health URL: $healthUrl"
+
+                    try {
+                        $response = Invoke-WebRequest `
+                            -Uri $healthUrl `
+                            -UseBasicParsing `
+                            -TimeoutSec 30
+
+                        Write-Host "HTTP Status: $($response.StatusCode)"
+                        Write-Host "Response:"
+                        Write-Host $response.Content
+
+                        if ($response.StatusCode -ne 200) {
+                            throw "Health check returned HTTP $($response.StatusCode)."
+                        }
+                    }
+                    catch {
+                        throw "Smart Parking health check failed: $($_.Exception.Message)"
+                    }
+                '''
+            }
+        }
     }
+
+
+    // ================================================================
+    // PIPELINE RESULT
+    // ================================================================
 
     post {
         success {
@@ -145,7 +345,23 @@ pipeline {
 ==============================================
 SMART PARKING CI/CD DEPLOYMENT SUCCESSFUL
 ==============================================
-GitHub → Jenkins → WSL → Ansible → EC2 → Docker
+
+GitHub
+   ↓
+Jenkins
+   ↓
+Frontend Test + Lint + Build
+   ↓
+Backend Test
+   ↓
+Docker Build
+   ↓
+WSL + Ansible
+   ↓
+EC2 Deployment
+   ↓
+Health Check
+
 ==============================================
 '''
         }
@@ -155,7 +371,9 @@ GitHub → Jenkins → WSL → Ansible → EC2 → Docker
 ==============================================
 SMART PARKING CI/CD DEPLOYMENT FAILED
 ==============================================
-Check the stage above for the exact error.
+
+Check the failed stage above for the exact error.
+
 ==============================================
 '''
         }
