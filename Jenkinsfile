@@ -249,7 +249,7 @@ stages {
                     ansible-playbook --version
                 "
 
-                if ($LASTEXITCODE -ne 0 {
+                if ($LASTEXITCODE -ne 0) {
                     throw "WSL or Ansible test failed."
                 }
             '''
