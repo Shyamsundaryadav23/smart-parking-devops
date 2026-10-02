@@ -135,6 +135,7 @@ stages {
 
                 Write-Host ""
                 Write-Host "----- Frontend npm audit -----"
+
                 Set-Location "$env:WORKSPACE\\Frontend"
 
                 npm audit --audit-level=high
@@ -145,6 +146,7 @@ stages {
 
                 Write-Host ""
                 Write-Host "----- Backend npm audit -----"
+
                 Set-Location "$env:WORKSPACE\\backend"
 
                 npm audit --audit-level=high
@@ -204,7 +206,6 @@ stages {
                     Write-Warning "Backend image scan reported HIGH/CRITICAL vulnerabilities."
                 }
 
-
                 Write-Host ""
                 Write-Host "----- Frontend Image Scan -----"
 
@@ -214,7 +215,6 @@ stages {
                     Write-Warning "Frontend image scan reported HIGH/CRITICAL vulnerabilities."
                 }
 
-
                 Write-Host ""
                 Write-Host "----- DB Init Image Scan -----"
 
@@ -223,7 +223,6 @@ stages {
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "DB-init image scan reported HIGH/CRITICAL vulnerabilities."
                 }
-
 
                 Write-Host ""
                 Write-Host "============================================"
@@ -250,7 +249,7 @@ stages {
                     ansible-playbook --version
                 "
 
-                if ($LASTEXITCODE -ne 0) {
+                if ($LASTEXITCODE -ne 0 {
                     throw "WSL or Ansible test failed."
                 }
             '''
@@ -273,7 +272,6 @@ stages {
 
                 Write-Host "Windows Workspace: $workspace"
 
-                # Convert Windows path to WSL path.
                 if ($workspace -match '^([A-Za-z]):(.*)$') {
                     $drive = $matches[1].ToLower()
                     $path = $matches[2].Replace('\\', '/')
