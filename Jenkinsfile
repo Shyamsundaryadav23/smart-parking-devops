@@ -308,7 +308,7 @@ pipeline {
                     Write-Host "Checking Smart Parking Backend Health"
                     Write-Host "============================================"
 
-                    $healthUrl = "http://44.193.203.75:5000/api/health"
+                    $healthUrl = "http://3.229.255.187:5000/api/health"
 
                     Write-Host "Health URL: $healthUrl"
 
