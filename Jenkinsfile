@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 stages {
 
     // ============================================================
@@ -430,7 +429,6 @@ stages {
 post {
     success {
         echo '''
-```
 
 ==============================================
 SMART PARKING CI/CD DEPLOYMENT SUCCESSFUL
@@ -460,10 +458,8 @@ Health Check
 '''
 }
 
-```
     failure {
         echo '''
-```
 
 ==============================================
 SMART PARKING CI/CD DEPLOYMENT FAILED
