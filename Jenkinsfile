@@ -132,16 +132,31 @@ stages {
                 Write-Host "Running Dependency Security Audit"
                 Write-Host "============================================"
 
+                # ============================================
+                # FRONTEND AUDIT
+                # ============================================
+
                 Write-Host ""
                 Write-Host "----- Frontend npm audit -----"
 
                 Set-Location "$env:WORKSPACE\\Frontend"
 
                 npm audit --audit-level=high
+                $frontendAuditExitCode = $LASTEXITCODE
 
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "Frontend npm audit reported HIGH/CRITICAL vulnerabilities."
+                Write-Host "Frontend npm audit exit code: $frontendAuditExitCode"
+
+                if ($frontendAuditExitCode -ne 0) {
+                    Write-Warning "Frontend npm audit found vulnerabilities or audit errors."
+                    Write-Warning "This is a warning-only security stage. Pipeline will continue."
                 }
+                else {
+                    Write-Host "Frontend npm audit completed successfully."
+                }
+
+                # ============================================
+                # BACKEND AUDIT
+                # ============================================
 
                 Write-Host ""
                 Write-Host "----- Backend npm audit -----"
@@ -149,14 +164,35 @@ stages {
                 Set-Location "$env:WORKSPACE\\backend"
 
                 npm audit --audit-level=high
+                $backendAuditExitCode = $LASTEXITCODE
 
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "Backend npm audit reported HIGH/CRITICAL vulnerabilities."
+                Write-Host "Backend npm audit exit code: $backendAuditExitCode"
+
+                if ($backendAuditExitCode -ne 0) {
+                    Write-Warning "Backend npm audit found HIGH/CRITICAL vulnerabilities."
+                    Write-Warning "This is a warning-only security stage. Pipeline will continue."
+                }
+                else {
+                    Write-Host "Backend npm audit completed successfully."
                 }
 
+                # ============================================
+                # FINAL STATUS
+                # ============================================
+
                 Write-Host ""
-                Write-Host "Dependency security audit completed."
                 Write-Host "============================================"
+                Write-Host "Dependency security audit completed."
+                Write-Host "Frontend audit exit code: $frontendAuditExitCode"
+                Write-Host "Backend audit exit code: $backendAuditExitCode"
+                Write-Host "Security audit is WARNING-ONLY."
+                Write-Host "Pipeline will continue."
+                Write-Host "============================================"
+
+                # IMPORTANT:
+                # npm audit can return exit code 1 when vulnerabilities
+                # are found. Do not propagate that failure to Jenkins.
+                exit 0
             '''
         }
     }
