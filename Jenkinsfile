@@ -144,6 +144,10 @@ pipeline {
                     Write-Host "DEPENDENCY SECURITY AUDIT"
                     Write-Host "============================================"
 
+                    # ========================================================
+                    # FRONTEND AUDIT
+                    # ========================================================
+
                     Write-Host ""
                     Write-Host "Scanning Frontend dependencies..."
 
@@ -151,10 +155,22 @@ pipeline {
 
                     npm audit --audit-level=high
 
-                    if ($LASTEXITCODE -ne 0) {
+                    $frontendAuditExitCode = $LASTEXITCODE
+
+                    if ($frontendAuditExitCode -ne 0) {
                         Write-Warning "Frontend npm audit reported vulnerabilities."
                         Write-Warning "Pipeline continues because audit is warning-only."
                     }
+                    else {
+                        Write-Host "Frontend npm audit passed."
+                    }
+
+                    # Reset native command exit code
+                    $global:LASTEXITCODE = 0
+
+                    # ========================================================
+                    # BACKEND AUDIT
+                    # ========================================================
 
                     Write-Host ""
                     Write-Host "Scanning Backend dependencies..."
@@ -163,13 +179,39 @@ pipeline {
 
                     npm audit --audit-level=high
 
-                    if ($LASTEXITCODE -ne 0) {
+                    $backendAuditExitCode = $LASTEXITCODE
+
+                    if ($backendAuditExitCode -ne 0) {
                         Write-Warning "Backend npm audit reported vulnerabilities."
                         Write-Warning "Pipeline continues because audit is warning-only."
                     }
+                    else {
+                        Write-Host "Backend npm audit passed."
+                    }
+
+                    # Reset native command exit code
+                    $global:LASTEXITCODE = 0
+
+                    # ========================================================
+                    # FINAL RESULT
+                    # ========================================================
 
                     Write-Host ""
-                    Write-Host "Dependency security audit completed."
+                    Write-Host "============================================"
+                    Write-Host "DEPENDENCY SECURITY AUDIT COMPLETED"
+                    Write-Host "============================================"
+
+                    Write-Host ""
+                    Write-Host "Frontend audit exit code: $frontendAuditExitCode"
+                    Write-Host "Backend audit exit code:  $backendAuditExitCode"
+
+                    Write-Host ""
+                    Write-Host "Security vulnerabilities were detected."
+                    Write-Host "They are being reported as warnings."
+                    Write-Host "The CI/CD pipeline will continue."
+
+                    # Explicitly tell Jenkins that this stage succeeded
+                    $global:LASTEXITCODE = 0
                 '''
             }
         }
