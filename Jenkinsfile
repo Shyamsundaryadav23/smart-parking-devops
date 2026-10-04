@@ -290,40 +290,40 @@ stages {
             '''
         }
     }
-    
-stage('Verify Kubernetes Access') {
-    steps {
-        powershell '''
-            Write-Host "============================================"
-            Write-Host "KUBERNETES ACCESS CHECK"
-            Write-Host "============================================"
 
-            Write-Host "`nCurrent Jenkins user:"
-            whoami
+    stage('Verify Kubernetes Access') {
+        steps {
+            powershell '''
+                Write-Host "============================================"
+                Write-Host "KUBERNETES ACCESS CHECK"
+                Write-Host "============================================"
 
-            Write-Host "`nChecking kubectl:"
-            kubectl version --client
+                Write-Host "`nCurrent Jenkins user:"
+                whoami
 
-            Write-Host "`nChecking Minikube:"
-            minikube version
+                Write-Host "`nChecking kubectl:"
+                kubectl version --client
 
-            Write-Host "`nChecking Minikube status:"
-            minikube status
+                Write-Host "`nChecking Minikube:"
+                minikube version
 
-            Write-Host "`nChecking Kubernetes nodes:"
-            kubectl get nodes
+                Write-Host "`nChecking Minikube status:"
+                minikube status
 
-            Write-Host "`nChecking Smart Parking pods:"
-            kubectl get pods -n smart-parking
+                Write-Host "`nChecking Kubernetes nodes:"
+                kubectl get nodes
 
-            if ($LASTEXITCODE -ne 0) {
-                throw "Kubernetes access check failed."
-            }
+                Write-Host "`nChecking Smart Parking pods:"
+                kubectl get pods -n smart-parking
 
-            Write-Host "`nKubernetes access check successful."
-        '''
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Kubernetes access check failed."
+                }
+
+                Write-Host "`nKubernetes access check successful."
+            '''
+        }
     }
-}
 
 //     // ============================================================
 //     // ANSIBLE INVENTORY
@@ -539,5 +539,5 @@ stage('Verify Kubernetes Access') {
 // ==============================================
 // '''
 // }
-// }
-// }
+}
+}
