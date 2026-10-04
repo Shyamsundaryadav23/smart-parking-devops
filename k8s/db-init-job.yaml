@@ -14,7 +14,7 @@ spec:
         app: smart-parking-db-init
 
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
 
       containers:
         - name: db-init
