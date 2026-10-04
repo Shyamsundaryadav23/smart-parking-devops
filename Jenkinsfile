@@ -210,7 +210,7 @@ pipeline {
                     Write-Host "They are being reported as warnings."
                     Write-Host "The CI/CD pipeline will continue."
 
-                    # Explicitly tell Jenkins that this stage succeeded
+                    # Explicitly return success to Jenkins
                     $global:LASTEXITCODE = 0
                 '''
             }
@@ -267,6 +267,8 @@ pipeline {
                     Write-Host "Docker images built successfully."
 
                     docker images | Select-String "smartparking"
+
+                    $global:LASTEXITCODE = 0
                 '''
             }
         }
@@ -291,10 +293,17 @@ pipeline {
                         --ignore-unfixed `
                         smartparking-backend:latest
 
-                    if ($LASTEXITCODE -ne 0) {
+                    $backendTrivyExitCode = $LASTEXITCODE
+
+                    if ($backendTrivyExitCode -ne 0) {
                         Write-Warning "Backend Trivy scan reported vulnerabilities."
                         Write-Warning "Pipeline continues because Trivy is warning-only."
                     }
+                    else {
+                        Write-Host "Backend Trivy scan passed."
+                    }
+
+                    $global:LASTEXITCODE = 0
 
                     Write-Host ""
                     Write-Host "Scanning Frontend image..."
@@ -304,10 +313,17 @@ pipeline {
                         --ignore-unfixed `
                         smartparking-frontend:latest
 
-                    if ($LASTEXITCODE -ne 0) {
+                    $frontendTrivyExitCode = $LASTEXITCODE
+
+                    if ($frontendTrivyExitCode -ne 0) {
                         Write-Warning "Frontend Trivy scan reported vulnerabilities."
                         Write-Warning "Pipeline continues because Trivy is warning-only."
                     }
+                    else {
+                        Write-Host "Frontend Trivy scan passed."
+                    }
+
+                    $global:LASTEXITCODE = 0
 
                     Write-Host ""
                     Write-Host "Scanning DB-init image..."
@@ -317,13 +333,33 @@ pipeline {
                         --ignore-unfixed `
                         smartparking-db-init:latest
 
-                    if ($LASTEXITCODE -ne 0) {
+                    $dbInitTrivyExitCode = $LASTEXITCODE
+
+                    if ($dbInitTrivyExitCode -ne 0) {
                         Write-Warning "DB-init Trivy scan reported vulnerabilities."
                         Write-Warning "Pipeline continues because Trivy is warning-only."
                     }
+                    else {
+                        Write-Host "DB-init Trivy scan passed."
+                    }
+
+                    $global:LASTEXITCODE = 0
 
                     Write-Host ""
-                    Write-Host "Trivy security scanning completed."
+                    Write-Host "============================================"
+                    Write-Host "TRIVY SECURITY SCANNING COMPLETED"
+                    Write-Host "============================================"
+
+                    Write-Host ""
+                    Write-Host "Backend Trivy exit code:  $backendTrivyExitCode"
+                    Write-Host "Frontend Trivy exit code: $frontendTrivyExitCode"
+                    Write-Host "DB-init Trivy exit code:  $dbInitTrivyExitCode"
+
+                    Write-Host ""
+                    Write-Host "Trivy findings are warning-only."
+                    Write-Host "Pipeline will continue."
+
+                    $global:LASTEXITCODE = 0
                 '''
             }
         }
@@ -434,9 +470,9 @@ pipeline {
 
                     Set-Location "$env:WORKSPACE"
 
-                    // ------------------------------------------------
-                    // Load Docker images into Minikube
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Load Docker images into Minikube
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Loading Backend image into Minikube..."
@@ -466,9 +502,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // Namespace
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Namespace
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Applying Kubernetes namespace..."
@@ -480,9 +516,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // ConfigMap
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # ConfigMap
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Applying ConfigMap..."
@@ -494,9 +530,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // DynamoDB
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # DynamoDB
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Applying DynamoDB deployment..."
@@ -517,9 +553,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // Wait for DynamoDB
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Wait for DynamoDB
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Waiting for DynamoDB to become ready..."
@@ -534,9 +570,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // Database Initialization
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Database Initialization
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Creating fresh DB initialization Job..."
@@ -585,9 +621,9 @@ pipeline {
                     kubectl logs "job/$jobName" -n smart-parking
 
 
-                    // ------------------------------------------------
-                    // Backend
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Backend
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Applying Backend deployment..."
@@ -608,9 +644,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // Frontend
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Frontend
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "Applying Frontend deployment..."
@@ -631,9 +667,9 @@ pipeline {
                     }
 
 
-                    // ------------------------------------------------
-                    // Final resource display
-                    // ------------------------------------------------
+                    # ------------------------------------------------
+                    # Final resource display
+                    # ------------------------------------------------
 
                     Write-Host ""
                     Write-Host "============================================"
