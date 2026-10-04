@@ -1,23 +1,30 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: smart-parking-db-init
+  generateName: smart-parking-db-init-
   namespace: smart-parking
+
 spec:
   backoffLimit: 4
+  ttlSecondsAfterFinished: 300
+
   template:
     metadata:
       labels:
         app: smart-parking-db-init
+
     spec:
       restartPolicy: OnFailure
+
       containers:
         - name: db-init
           image: smartparking-backend:latest
           imagePullPolicy: IfNotPresent
+
           command:
             - node
             - scripts/init-local-db.js
+
           env:
             - name: AWS_REGION
               valueFrom:
