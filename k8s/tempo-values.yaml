@@ -1,0 +1,13 @@
+tempo:
+  reportingEnabled: false
+
+  storage:
+    trace:
+      backend: local
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+service:
+  type: ClusterIP

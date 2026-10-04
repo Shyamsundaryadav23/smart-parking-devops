@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smart-parking-config
+  namespace: smart-parking
+data:
+  AWS_REGION: "eu-north-1"
+  DYNAMODB_ENDPOINT: "http://smart-parking-dynamodb:8000"
+  USERS_TABLE: "Users"
+  PARKING_LOTS_TABLE: "ParkingLots"
+  SLOTS_TABLE: "ParkingSlots"
+  RESERVATIONS_TABLE: "Reservations"

@@ -1,0 +1,162 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: smart-parking-sre-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+
+spec:
+  groups:
+
+    # ============================================================
+    # SLI RECORDING RULES
+    # ============================================================
+
+    - name: smart-parking-sre
+      interval: 30s
+
+      rules:
+
+        # ==========================================================
+        # SLI 1: Availability
+        # Target: >= 99%
+        # ==========================================================
+
+        - record: smart_parking:availability
+          expr: |
+            avg_over_time(
+              up{service="smart-parking-backend"}[5m]
+            )
+
+        # ==========================================================
+        # SLI 2: HTTP 5xx Error Rate
+        # Target: < 1%
+        #
+        # If there are no 5xx requests, return 0 instead of
+        # returning an empty result.
+        # ==========================================================
+
+        - record: smart_parking:error_rate
+          expr: |
+            (
+              sum(
+                rate(
+                  http_requests_total{
+                    service="smart-parking-backend",
+                    status_code=~"5.."
+                  }[5m]
+                )
+              )
+              or vector(0)
+            )
+            /
+            clamp_min(
+              sum(
+                rate(
+                  http_requests_total{
+                    service="smart-parking-backend"
+                  }[5m]
+                )
+              ),
+              1e-9
+            )
+
+        # ==========================================================
+        # SLI 3: P95 HTTP Latency
+        # Target: < 500 ms
+        # ==========================================================
+
+        - record: smart_parking:p95_latency_seconds
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum(
+                rate(
+                  http_request_duration_seconds_bucket{
+                    service="smart-parking-backend"
+                  }[5m]
+                )
+              ) by (le)
+            )
+
+
+    # ============================================================
+    # SLO ALERTS
+    # ============================================================
+
+    - name: smart-parking-slo-alerts
+      interval: 30s
+
+      rules:
+
+        # ==========================================================
+        # Availability SLO
+        # ==========================================================
+
+        - alert: SmartParkingAvailabilitySLOViolation
+          expr: |
+            smart_parking:availability < 0.99
+          for: 2m
+          labels:
+            severity: critical
+            service: smart-parking-backend
+          annotations:
+            summary: "Smart Parking backend availability below SLO"
+            description: "Backend availability has remained below 99% for more than 2 minutes."
+
+        # ==========================================================
+        # Error Rate SLO
+        # ==========================================================
+
+        - alert: SmartParkingHighErrorRate
+          expr: |
+            smart_parking:error_rate > 0.01
+          for: 2m
+          labels:
+            severity: warning
+            service: smart-parking-backend
+          annotations:
+            summary: "Smart Parking backend error rate is high"
+            description: "HTTP 5xx error rate has exceeded 1% for more than 2 minutes."
+
+        # ==========================================================
+        # Latency SLO
+        # ==========================================================
+
+        - alert: SmartParkingHighLatency
+          expr: |
+            smart_parking:p95_latency_seconds > 0.5
+          for: 2m
+          labels:
+            severity: warning
+            service: smart-parking-backend
+          annotations:
+            summary: "Smart Parking backend latency is high"
+            description: "P95 HTTP latency has exceeded 500ms for more than 2 minutes."
+        
+        # ==========================================================
+        # Backend Down
+        # ==========================================================
+
+        - alert: SmartParkingBackendDown
+          expr: |
+            absent(up{service="smart-parking-backend"}) == 1
+          for: 1m
+          labels:
+            severity: critical
+            service: smart-parking-backend
+          annotations:
+            summary: "Smart Parking backend is down"
+            description: "Prometheus cannot find the Smart Parking backend target."
+
+        - alert: SmartParkingBackendTargetDown
+          expr: |
+            up{service="smart-parking-backend"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: smart-parking-backend
+          annotations:
+            summary: "Smart Parking backend target is down"
+            description: "Prometheus is unable to scrape the Smart Parking backend."

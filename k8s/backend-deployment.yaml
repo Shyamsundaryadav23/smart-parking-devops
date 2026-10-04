@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-parking-backend
+  namespace: smart-parking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-parking-backend
+  template:
+    metadata:
+      labels:
+        app: smart-parking-backend
+    spec:
+      containers:
+        - name: backend
+          image: smartparking-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: smart-parking-config

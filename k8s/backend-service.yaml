@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-parking-backend
+  namespace: smart-parking
+  labels:
+    app: smart-parking-backend
+spec:
+  selector:
+    app: smart-parking-backend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: NodePort

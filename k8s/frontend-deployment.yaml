@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-parking-frontend
+  namespace: smart-parking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-parking-frontend
+  template:
+    metadata:
+      labels:
+        app: smart-parking-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: smartparking-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
